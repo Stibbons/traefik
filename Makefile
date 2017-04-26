@@ -22,6 +22,7 @@ INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
+DOCKER_BUILD := docker build
 
 print-%: ; @echo $*=$($*)
 
@@ -49,19 +50,19 @@ validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
 
 build: dist
-	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	$(DOCKER_BUILD) $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 build-webui:
-	docker build -t traefik-webui -f webui/Dockerfile webui
+	$(DOCKER_BUILD) -t traefik-webui -f webui/Dockerfile webui
 
 build-no-cache: dist
-	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	$(DOCKER_BUILD) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
 image: binary ## build a docker traefik image
-	docker build -t $(TRAEFIK_IMAGE) .
+	$(DOCKER_BUILD) -t $(TRAEFIK_IMAGE) .
 
 dist:
 	mkdir dist
